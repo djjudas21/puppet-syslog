@@ -1,41 +1,39 @@
-# == Class: syslog
-#
-# Full description of class syslog here.
-#
-# === Parameters
-#
-# Document parameters here.
-#
-# [*sample_parameter*]
-#   Explanation of what this parameter affects and what it defaults to.
-#   e.g. "Specify one or more upstream ntp servers as an array."
-#
-# === Variables
-#
-# Here you should define a list of variables that this module would require.
-#
-# [*sample_variable*]
-#   Explanation of how this variable affects the funtion of this class and if
-#   it has a default. e.g. "The parameter enc_ntp_servers must be set by the
-#   External Node Classifier as a comma separated list of hostnames." (Note,
-#   global variables should be avoided in favor of class parameters as
-#   of Puppet 2.6.)
-#
-# === Examples
-#
-#  class { 'syslog':
-#    servers => [ 'pool.ntp.org', 'ntp.local.company.com' ],
-#  }
-#
-# === Authors
-#
-# Author Name <author@domain.com>
-#
-# === Copyright
-#
-# Copyright 2014 Your name here, unless otherwise noted.
-#
-class syslog {
+# Install & configure rsyslog for clients
+class syslog ($nagios_checks = false) {
+  file { 'rsyslog.conf':
+    name    => '/etc/rsyslog.conf',
+    mode    => '0644',
+    owner   => 'root',
+    group   => 'root',
+    source  => 'puppet:///modules/syslog/rsyslog.conf',
+    require => Package['rsyslog'],
+  }
 
+  package { 'rsyslog':
+    ensure => installed,
+  }
 
+  # Start the rsyslog service
+  service { 'rsyslog':
+    ensure     => running,
+    subscribe  => File['rsyslog.conf'],
+    require    => [ File['rsyslog.conf'], Package['rsyslog'] ],
+    enable     => true,
+    hasstatus  => true,
+    hasrestart => true,
+  }
+
+  if $nagios_checks {
+    @@nagios_service { "check_rsyslogd_${::fqdn}":
+      check_command       => 'check_nrpe!check_rsyslogd',
+      service_description => 'rsyslog',
+      use                 => '3min-service',
+    }
+
+    @@nagios_servicedependency { "check_rsyslogd_${::fqdn}":
+      dependent_host_name           => $::fqdn,
+      dependent_service_description => 'rsyslog',
+      service_description           => 'NRPE',
+    }
+  }
 }
