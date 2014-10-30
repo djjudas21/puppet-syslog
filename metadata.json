@@ -9,8 +9,14 @@
   "issues_url": "https://github.com/djjudas21/puppet-syslog/issues",
   "operatingsystem_support": [
     {
-    "operatingsystem":"RedHat",
-    "operatingsystemrelease":[ "5.0", "6.0" ]
+      "operatingsystem": "RedHat",
+      "operatingsystemrelease": [
+        "5.0",
+        "6.0"
+      ]
     }
+  ],
+  "dependencies": [
+  
   ]
 }
